@@ -4,7 +4,7 @@
 
 use std::cell::Cell;
 use std::num::NonZeroUsize;
-use cache_padded::CachePadded;
+use crossbeam_utils::CachePadded;
 use crate::loom::sync::atomic::{ AtomicUsize, Ordering };
 
 

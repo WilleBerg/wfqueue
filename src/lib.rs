@@ -10,7 +10,7 @@ pub mod queue;
 
 use std::num::NonZeroUsize;
 use std::marker::PhantomData;
-use cache_padded::CachePadded;
+use crossbeam_utils::CachePadded;
 use per_thread_object::ThreadLocal;
 
 
@@ -64,7 +64,8 @@ impl<T: Queueable> WfQueue<T> {
     }
 
     pub fn push(&self, val: T) -> Result<(), T> {
-        let ctx = self.context.get_or(Context::new);
+        per_thread_object::stack_token!(token);
+        let ctx = self.context.get_or_init(token, Context::new);
         let val = val.into_nonzero();
 
         if self.queue.try_enqueue(&ctx.enq, val) {
@@ -77,7 +78,8 @@ impl<T: Queueable> WfQueue<T> {
     }
 
     pub fn pop(&self) -> Option<T> {
-        let ctx = self.context.get_or(Context::new);
+        per_thread_object::stack_token!(token);
+        let ctx = self.context.get_or_init(token, Context::new);
         let val = self.queue.try_dequeue(&ctx.deq)?;
 
         unsafe {
